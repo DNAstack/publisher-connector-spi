@@ -1,0 +1,590 @@
+openapi: '3.0.2'
+
+info:
+  title: DNAStack Data Lake Connector SPI
+  version: 0.1.0
+  description: The internal service interface implemented by Data Lake Connector services.
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: connector
+    description: Connector APIs
+  - name: connections
+    description: Connector Instance / Connection APIs
+  - name: connection-types
+    description: Connection Types
+
+servers:
+  - url: https://connector.staging.dnastack.com
+  - url: https://connector.dnastack.com
+
+paths:
+  ## Connector connection-type management
+  /connection-types:
+    get:
+      tags:
+        - connection-types
+      summary: Lists the connection-types
+      description: Lists the types of connections supported by this connector
+      responses:
+        '200':
+          description: A list of connection-types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConnectionType'
+
+  /connection-types/{typeId}:
+    get:
+      tags:
+        - connection-types
+      summary: Returns this connection type
+      description: |-
+        Returns the details of this connection type, including the URL location for icon used for this kind of connection
+      parameters:
+        - name: typeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A connection-type details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionType'
+
+  ## Connector Management
+  /connections:
+    get:
+      tags:
+        - connector
+      summary: Lists connections
+      description: Lists existing connector connections
+      responses:
+        '200':
+          description: A list of connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Connection'
+        '401':
+          description: Authentication Required
+        '500':
+          description: Internal Server Error
+    post:
+      tags:
+        - connector
+      summary: Creates a connection
+      description: Creates a new connector connection
+      requestBody:
+        description: Connector to be created
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Connection'
+      responses:
+        '200':
+          description: Connector connection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+        '401':
+          description: Authentication Required
+        '500':
+          description: Internal Server Error
+
+  /connections/{connectionId}:
+    get:
+      tags:
+        - connector
+      summary: Returns this connection
+      description: Returns the configuration details of this connection
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Configuration details of this connection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+    patch:
+      tags:
+        - connector
+      summary: Updates this connection
+      description: |-
+        Updates the configuration details of this connection.
+        Modifies the existing configuration details of this connection by applying the given JSON Patch document to it.
+        Request body must be a [JSON Patch](http://jsonpatch.com/) document describing changes to a Connection object.
+        Response headers conform to [RFC 5789](https://tools.ietf.org/html/rfc5789).
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json-patch+json:
+            schema:
+              $ref: 'http://json.schemastore.org/json-patch'
+      responses:
+        '204':
+          description: Update OK
+          headers:
+            Content-Location:
+              schema:
+                type: string
+                description: URL of the Connection that was patched
+            ETag:
+              schema:
+                type: string
+                description: New ETag of the Connection after the patch has been applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+    delete:
+      tags:
+        - connector
+      summary: Deletes this connection
+      description: Deletes this connection
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deletion OK
+
+  ## Connector Instance / Connection Management
+  /connections/{connectionId}/blobs:
+    get:
+      tags:
+        - connections
+      summary: Lists the blobs within this connection
+      description: Lists the blobs within this connection
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of blobs within this connection
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blobs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Blob'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /connections/{connectionId}/blobs/{blobId}/access/https:
+    get:
+      tags:
+        - connections
+      summary: Returns an access URL to fetch blob data
+      description: |-
+        Returns an Access URL describing how to fetch the blob data within this connection.
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: blobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: An access URL to fetch blob data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessURL'
+
+  /connections/{connectionId}/tables:
+    get:
+      tags:
+        - connections
+      summary: List Tables
+      description: Returns a list of tables that currently exist within this connection
+      operationId: listConnectionTables
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of Tables
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTablesResponse'
+        '500':
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /connections/{connectionId}/table/{tableName}/info:
+    get:
+      tags:
+        - connections
+      summary: Get a Table for this connection
+      description: Returns the information about the Table identified by tableName for this connection
+      operationId: getTable
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: tableName
+          in: path
+          description: Unique table name, unique to this implementation
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A Table
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '404':
+          description: The table doesn't exist
+        '500':
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /connections/{connectionId}/table/{tableName}/data:
+    get:
+      tags:
+        - connections
+      summary: Fetch data from a Table
+      description: Optional operation that returns data from a Table
+      operationId: getData
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: table_name
+          in: path
+          description: Unique Table name, unique to this implementation
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Data from the Table
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableData'
+        '404':
+          description: The table doesn't exist
+        '500':
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /connections/{connectionId}/search:
+    post:
+      tags:
+        - connections
+      summary: Perform a search on Tables of this connection
+      description: Optional operation that accepts a SearchRequest and returns a TableData
+      operationId: search
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Query to execute
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Query results returned as TableData
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableData'
+        '400':
+          description: The query is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: This server does not implement the search operation
+        '500':
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    ConnectionType:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Connection Type
+          example: azure-blobstore
+        icon:
+          type: string
+          description: URL location icon for this kind of connection
+          example: https://storage.googleapis.com/data-lake/icons/azure-blobstore.jpg
+    Connection:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique connection identifier
+          format: uuid
+          example: 615e48e5-2cf9-4968-95cd-2a61013b563b
+        configuration:
+          type: object
+          description: |-
+            Configuration per the connector type
+            May include credentials (eg. service account keys or username / password) needed to access the underlying resource.
+        type:
+          $ref: '#/components/schemas/ConnectionType'
+    Blob:
+      type: object
+      description: |-
+        This Blob object is styled after the GA4GH DRS API DrsObject.
+        The `AccessMethod` section is omitted and the blob behaves as `https` is the sole available access method.
+      required: [ 'id', 'self_uri', 'size', 'created_time', 'checksums' ]
+      properties:
+        id:
+          type: string
+          description: An identifier unique to this `blob`.
+        path:
+          type: string
+          description: The path to the `blob` on the data source.
+        size:
+          type: integer
+          format: int64
+          description: For blobs, the blob size in bytes.
+        created_time:
+          type: string
+          format: date-time
+          description: |-
+            Timestamp of content creation in RFC3339.
+            (This is the creation time of the underlying content, not of the JSON object.)
+        updated_time:
+          type: string
+          format: date-time
+          description: >-
+            Timestamp of content update in RFC3339, identical to `created_time` in systems
+            that do not support updates.
+            (This is the update time of the underlying content, not of the JSON object.)
+        version:
+          type: string
+          description: >-
+            A string representing a version.
+            (Some systems may use checksum, a RFC3339 timestamp, or an incrementing version number.)
+        mime_type:
+          type: string
+          description: A string providing the mime-type of the `Blob`.
+          example: application/json
+        checksums:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Checksum'
+          description: >-
+            The checksum of the `DrsObject`. At least one checksum must be provided.
+            For blobs, the checksum is computed over the bytes in the blob.
+        region:
+          type: string
+          description: Name of the region in the cloud service provider that the object belongs to.
+          example: us-east-1
+        description:
+          type: string
+          description: A human readable description of the `Blob`.
+    Checksum:
+      type: object
+      required: [ 'checksum', 'type' ]
+      properties:
+        checksum:
+          type: string
+          description: 'The hex-string encoded checksum for the data'
+        type:
+          type: string
+          description: >-
+            The digest method used to create the checksum.
+            The value (e.g. `sha-256`) SHOULD be listed as `Hash Name String` in the https://www.iana.org/assignments/named-information/named-information.xhtml#hash-alg[IANA Named Information Hash Algorithm Registry].
+            Other values MAY be used, as long as implementors are aware of the issues discussed in https://tools.ietf.org/html/rfc6920#section-9.4[RFC6920].
+            GA4GH may provide more explicit guidance for use of non-IANA-registered algorithms in the future.
+            Until then, if implementors do choose such an algorithm (e.g. because it's implemented by their storage provider), they SHOULD use an existing
+            standard `type` value such as `md5`, `etag`, `crc32c`, `trunc512`, or `sha1`.
+          example: sha-256
+    AccessURL:
+      type: object
+      required: [ 'url' ]
+      properties:
+        url:
+          type: string
+          description: A fully resolvable URL that can be used to fetch the actual object bytes.
+        headers:
+          type: array
+          items:
+            type: string
+          description: >-
+            An optional list of headers to include in the HTTP request to `url`.
+            These headers can be used to provide auth tokens required to fetch the object bytes.
+          example:
+            Authorization: Basic Z2E0Z2g6ZHJz
+    ListTablesResponse:
+      type: object
+      required: [ 'tables' ]
+      properties:
+        tables:
+          type: array
+          items:
+            $ref: '#/components/schemas/Table'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        errors:
+          $ref: '#/components/schemas/ErrorList'
+    Table:
+      type: object
+      description: Describes a Table hosted by this search node.
+      required: [ 'name', 'data_model']
+      properties:
+        name:
+          type: string
+          description: Table name
+        description:
+          type: string
+          description: Optional description of the Table
+        data_model:
+          $ref: 'http://json-schema.org/draft-07/schema#'
+        errors:
+          $ref: '#/components/schemas/ErrorList'
+    TableData:
+      type: object
+      description: A paginated collection of tabular data
+      required: [ 'data_model', 'data' ]
+      properties:
+        data_model:
+          $ref: 'http://json-schema.org/draft-07/schema#'
+        data:
+          type: array
+          description: Page of JSON values, each adhering to the schema given in the `data_model` property
+          items:
+            # Each item must conform to the schema provided in the 'data_model' section of this Table.
+            # Not sure if this constraint can be expressed in OpenAPI 3.0.
+            type: object
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        errors:
+          $ref: '#/components/schemas/ErrorList'
+    SearchRequest:
+      type: object
+      description: Request body containing an SQL query with zero or more positional parameters.
+      required: [ 'query' ]
+      properties:
+        query:
+          type: string
+          description: Query in SQL. Supported SQL grammar, data types, and functions are described in [the specification](https://github.com/ga4gh-discovery/ga4gh-search/blob/develop/SEARCHSPEC.md#query).
+          example: SELECT some_string, some_num FROM a_table WHERE some_string=? AND some_num=?
+        parameters:
+          type: array
+          items: { }
+          description: Positional parameters for the query in `query` property.
+          example: [ hello, 42 ]
+    ErrorResponse:
+      type: object
+      description: The response body when no part of the request can be fulfilled
+      properties:
+        errors:
+          $ref: '#/components/schemas/ErrorList'
+    ErrorList:
+      type: array
+      description: List of errors encountered
+      items:
+        $ref: '#/components/schemas/Error'
+    Error:
+      type: object
+      required: [ 'title' ]
+      properties:
+        source:
+          type: string
+          description: >
+            The 'source' field should only be present when the error originated in an attached data source backing the Search
+            API. The value of source can be any of the following:
+            1. A fully qualified table `name`
+            2. Any prefix of a table `name` that ends before a `.` character in the name. For example
+            if there is a table called `foo.bar.baz`, valid prefixes would be `foo` and `foo.bar`. Partial prefixes
+            which do not end just before a `.`, are not valid. For example: `foo.b` and `fo` are not allowed.
+            If the error originated inside the Search API implementation and is not associated with any particular table
+            or group of tables, then the source must be absent. An example of this would be an error occurring from a bug
+            in the implementation. Additionally, if the error is due to a bad request from the client, the source must
+            also be absent.
+        title:
+          type: string
+          description: |
+            A short, human-readable description of the error.
+            The value should not change from occurrence to occurrence of an error, except for purposes of localization.
+          example: 'Internal server error'
+        detail:
+          type: string
+          description: 'A human-readable explanation specific to this occurrence of the error.'
+          example: 'Internal server error'
+    Pagination:
+      type: object
+      properties:
+        next_page_url:
+          type: string
+          description: URL pointing to the next page of the same Table. Null or absent on last page.
+          format: uri
