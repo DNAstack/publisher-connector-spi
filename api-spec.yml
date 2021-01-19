@@ -365,6 +365,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /connections/{connectionId}/health:
+    get:
+      tags:
+        - connections
+      summary: Fetch the health of the given connection
+      description: Returns the status based on the last five calls to Azure
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Object with overall status, and details on the last five calls
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionHealth'
+        '400':
+          description: The query is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No records for the given connectionID found
+        '500':
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -382,6 +416,15 @@ components:
           type: string
           description: URL location icon for this kind of connection
           example: https://storage.googleapis.com/data-lake/icons/azure-blobstore.jpg
+    ConnectionHealth:
+      type: object
+      properties:
+        status:
+          type: string
+          description: One of UP, INTERMITTENT or DOWN
+        recentCalls:
+          type: object
+          description: Status of last five calls to Azure
     Connection:
       type: object
       properties:
