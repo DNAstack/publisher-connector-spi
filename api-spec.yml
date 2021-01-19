@@ -421,10 +421,10 @@ components:
       properties:
         status:
           type: string
-          description: One of UP, INTERMITTENT or DOWN
+          description: Overall health for the given connectionID - One of UP, INTERMITTENT or DOWN
         recentCalls:
           type: object
-          description: Status of last five calls to Azure
+          description: Detailed status of the last five calls to Azure for the given connectionID
     Connection:
       type: object
       properties:
