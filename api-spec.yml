@@ -379,7 +379,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Object with overall status, and details on the last five calls
+          description: Object with overall status, and a list of objects with details on the last five calls
           content:
             application/json:
               schema:
@@ -421,10 +421,37 @@ components:
       properties:
         status:
           type: string
-          description: Overall health for the given connectionID - One of UP, INTERMITTENT or DOWN
-        recentCalls:
-          type: object
-          description: Detailed status of the last five calls to Azure for the given connectionID
+          description: Overall health for the given connectionId - One of UP, INTERMITTENT or DOWN
+        recentCallList:
+          type: array
+          description: List of the last five API calls made for a connection
+          items:
+            $ref: '#/components/schemas/RecentCall'
+    RecentCall:
+      type: object
+      description: Detailed status of an API call made for a connection
+      properties:
+        operation:
+          type: string
+          description: English description of the purpose of the request
+        traceId:
+          type: string
+          description: Current Spring Cloud Sleuth trace ID
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        elapsedTimeMs:
+          type: integer
+          format: int64
+        result:
+          type: string
+          description: One of SUCCESS, TIMEOUT, ERROR
+        errorMessage:
+          type: string
+          description: Null if result is success, otherwise error info from the backend
     Connection:
       type: object
       properties:
