@@ -18,7 +18,7 @@ tags:
 
 servers:
   - url: https://connector.staging.dnastack.com
-  - url: https://connector.dnastack.com
+  - url: https://connector.prod.dnastack.com
 
 paths:
   /service-info:
@@ -195,14 +195,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  blobs:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Blob'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
+                $ref: '#/components/schemas/BlobList'
 
   /connections/{connectionId}/blobs/{blobId}/access/https:
     get:
@@ -249,7 +242,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListTablesResponse'
+                $ref: '#/components/schemas/TablesList'
         '500':
           description: An unexpected error occurred
           content:
@@ -439,7 +432,7 @@ components:
           type: string
           description: Refers to the id of ConnectionType
           example: azure-blobstore
-        verion:
+        version:
           type: string
           description: The eTag for connection to support optimistic locking.
         createdAt:
@@ -456,6 +449,16 @@ components:
         updatedBy:
           type: string
           description: The user that last updated the connection.
+    BlobList:
+      type: object
+      required: [ 'blobList' ]
+      properties:
+        blobList:
+          type: array
+          items:
+            $ref: '#/components/schemas/Blob'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
     Blob:
       type: object
       description: |-
@@ -543,7 +546,7 @@ components:
             These headers can be used to provide auth tokens required to fetch the object bytes.
           example:
             Authorization: Basic Z2E0Z2g6ZHJz
-    ListTablesResponse:
+    TablesList:
       type: object
       required: [ 'tables' ]
       properties:
