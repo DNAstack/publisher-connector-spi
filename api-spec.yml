@@ -21,6 +21,23 @@ servers:
   - url: https://connector.dnastack.com
 
 paths:
+  /service-info:
+    get:
+      tags:
+        - service-info
+      summary: Show information the connector service
+      description: Show information the connector service
+      operationId: getServiceInfo
+      responses:
+        '200':
+          description: |
+            Show information about this Connector service.
+            Use `"type": { "group": "com.dnastack", "artifact": "datalake", "version": "1.0.0" }` when implementing this specification directly.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInfo'
+
   ## Connector connection-type management
   /connection-types:
     get:
@@ -38,34 +55,19 @@ paths:
                 items:
                   $ref: '#/components/schemas/ConnectionType'
 
-  /connection-types/{typeId}:
-    get:
-      tags:
-        - connection-types
-      summary: Returns this connection type
-      description: |-
-        Returns the details of this connection type, including the URL location for icon used for this kind of connection
-      parameters:
-        - name: typeId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: A connection-type details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConnectionType'
-
   ## Connector Management
-  /connections:
+  /connections/{connectionId}:
     get:
       tags:
         - connector
       summary: Lists connections
       description: Lists existing connector connections
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: A list of connections
@@ -79,35 +81,11 @@ paths:
           description: Authentication Required
         '500':
           description: Internal Server Error
-    post:
+    delete:
       tags:
         - connector
-      summary: Creates a connection
-      description: Creates a new connector connection
-      requestBody:
-        description: Connector to be created
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Connection'
-      responses:
-        '200':
-          description: Connector connection
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Connection'
-        '401':
-          description: Authentication Required
-        '500':
-          description: Internal Server Error
-
-  /connections/{connectionId}:
-    get:
-      tags:
-        - connector
-      summary: Returns this connection
-      description: Returns the configuration details of this connection
+      summary: Deletes a connection
+      description: Deletes a connection
       parameters:
         - name: connectionId
           in: path
@@ -116,15 +94,11 @@ paths:
             type: string
       responses:
         '200':
-          description: Configuration details of this connection
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Connection'
+          description: Deletion OK
     patch:
       tags:
         - connector
-      summary: Updates this connection
+      summary: Updates a connection
       description: |-
         Updates the configuration details of this connection.
         Modifies the existing configuration details of this connection by applying the given JSON Patch document to it.
@@ -137,10 +111,11 @@ paths:
           schema:
             type: string
       requestBody:
+        required: true
         content:
           application/json-patch+json:
             schema:
-              $ref: 'http://json.schemastore.org/json-patch'
+              $ref: 'https://json.schemastore.org/json-patch'
       responses:
         '204':
           description: Update OK
@@ -157,11 +132,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Connection'
-    delete:
+  /connections:
+    post:
       tags:
         - connector
-      summary: Deletes this connection
-      description: Deletes this connection
+      summary: Creates a connection
+      description: Creates a new connector connection
+      requestBody:
+        description: Connector to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Connection'
+      responses:
+        '200':
+          description: Connector connection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+        '401':
+          description: Authentication Required
+        '500':
+          description: Internal Server Error
+
+    get:
+      tags:
+        - connector
+      summary: Returns a connection
+      description: Returns the configuration details of this connection
       parameters:
         - name: connectionId
           in: path
@@ -170,7 +170,11 @@ paths:
             type: string
       responses:
         '200':
-          description: Deletion OK
+          description: Configuration details of this connection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
 
   ## Connector Instance / Connection Management
   /connections/{connectionId}/blobs:
@@ -301,7 +305,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: table_name
+        - name: tableName
           in: path
           description: Unique Table name, unique to this implementation
           required: true
@@ -407,6 +411,7 @@ components:
   schemas:
     ConnectionType:
       type: object
+      required: [ 'id', 'icon' ]
       properties:
         id:
           type: string
@@ -416,44 +421,9 @@ components:
           type: string
           description: URL location icon for this kind of connection
           example: https://storage.googleapis.com/data-lake/icons/azure-blobstore.jpg
-    ConnectionHealth:
-      type: object
-      properties:
-        status:
-          type: string
-          description: Overall health for the given connectionId - One of UP, INTERMITTENT or DOWN
-        recentCallList:
-          type: array
-          description: List of the last five API calls made for a connection
-          items:
-            $ref: '#/components/schemas/RecentCall'
-    RecentCall:
-      type: object
-      description: Detailed status of an API call made for a connection
-      properties:
-        operation:
-          type: string
-          description: English description of the purpose of the request
-        traceId:
-          type: string
-          description: Current Spring Cloud Sleuth trace ID
-        startTime:
-          type: string
-          format: date-time
-        endTime:
-          type: string
-          format: date-time
-        elapsedTimeMs:
-          type: integer
-          format: int64
-        result:
-          type: string
-          description: One of SUCCESS, TIMEOUT, ERROR
-        errorMessage:
-          type: string
-          description: Null if result is success, otherwise error info from the backend
     Connection:
       type: object
+      required: [ 'id', 'configuration', 'type', 'createdAt', 'createdBy' ]
       properties:
         id:
           type: string
@@ -466,13 +436,32 @@ components:
             Configuration per the connector type
             May include credentials (eg. service account keys or username / password) needed to access the underlying resource.
         type:
-          $ref: '#/components/schemas/ConnectionType'
+          type: string
+          description: Refers to the id of ConnectionType
+          example: azure-blobstore
+        verion:
+          type: string
+          description: The eTag for connection to support optimistic locking.
+        createdAt:
+          type: string
+          format: date-time
+          description: The date and time when the connection was created.
+        createdBy:
+          type: string
+          description: The user that created the connection.
+        updatedAt:
+          type: string
+          format: date-time
+          description: The date and time when the connection was last updated.
+        updatedBy:
+          type: string
+          description: The user that last updated the connection.
     Blob:
       type: object
       description: |-
         This Blob object is styled after the GA4GH DRS API DrsObject.
         The `AccessMethod` section is omitted and the blob behaves as `https` is the sole available access method.
-      required: [ 'id', 'self_uri', 'size', 'created_time', 'checksums' ]
+      required: [ 'id', 'size', 'createdTime', 'checksums' ]
       properties:
         id:
           type: string
@@ -484,17 +473,17 @@ components:
           type: integer
           format: int64
           description: For blobs, the blob size in bytes.
-        created_time:
+        createdTime:
           type: string
           format: date-time
           description: |-
             Timestamp of content creation in RFC3339.
             (This is the creation time of the underlying content, not of the JSON object.)
-        updated_time:
+        updatedTime:
           type: string
           format: date-time
           description: >-
-            Timestamp of content update in RFC3339, identical to `created_time` in systems
+            Timestamp of content update in RFC3339, identical to `createdTime` in systems
             that do not support updates.
             (This is the update time of the underlying content, not of the JSON object.)
         version:
@@ -502,7 +491,7 @@ components:
           description: >-
             A string representing a version.
             (Some systems may use checksum, a RFC3339 timestamp, or an incrementing version number.)
-        mime_type:
+        mimeType:
           type: string
           description: A string providing the mime-type of the `Blob`.
           example: application/json
@@ -569,7 +558,7 @@ components:
     Table:
       type: object
       description: Describes a Table hosted by this search node.
-      required: [ 'name', 'data_model']
+      required: [ 'name', 'dataModel']
       properties:
         name:
           type: string
@@ -577,22 +566,22 @@ components:
         description:
           type: string
           description: Optional description of the Table
-        data_model:
+        dataModel:
           $ref: 'http://json-schema.org/draft-07/schema#'
         errors:
           $ref: '#/components/schemas/ErrorList'
     TableData:
       type: object
       description: A paginated collection of tabular data
-      required: [ 'data_model', 'data' ]
+      required: [ 'dataModel', 'data' ]
       properties:
-        data_model:
+        dataModel:
           $ref: 'http://json-schema.org/draft-07/schema#'
         data:
           type: array
-          description: Page of JSON values, each adhering to the schema given in the `data_model` property
+          description: Page of JSON values, each adhering to the schema given in the `dataModel` property
           items:
-            # Each item must conform to the schema provided in the 'data_model' section of this Table.
+            # Each item must conform to the schema provided in the 'dataModel' section of this Table.
             # Not sure if this constraint can be expressed in OpenAPI 3.0.
             type: object
         pagination:
@@ -654,7 +643,47 @@ components:
     Pagination:
       type: object
       properties:
-        next_page_url:
+        nextPageUrl:
           type: string
           description: URL pointing to the next page of the same Table. Null or absent on last page.
           format: uri
+    ConnectionHealth:
+      type: object
+      required: [ 'status', 'recentCallList' ]
+      properties:
+        status:
+          type: string
+          description: Overall health for the given connectionId - One of UP, INTERMITTENT or DOWN
+        recentCallList:
+          type: array
+          description: List of the last five API calls made for a connection
+          items:
+            $ref: '#/components/schemas/RecentCall'
+    RecentCall:
+      type: object
+      description: Detailed status of an API call made for a connection
+      required: [ 'operation', 'traceId', 'startTime', 'endTime', 'elapsedTimeMs', 'result' ]
+      properties:
+        operation:
+          type: string
+          description: English description of the purpose of the request
+        traceId:
+          type: string
+          description: Current Spring Cloud Sleuth trace ID
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        elapsedTimeMs:
+          type: integer
+          format: int64
+        result:
+          type: string
+          description: One of SUCCESS, TIMEOUT, ERROR
+        errorMessage:
+          type: string
+          description: Null if result is success, otherwise error info from the backend
+    ServiceInfo:
+      $ref: 'https://raw.githubusercontent.com/ga4gh-discovery/ga4gh-service-info/v1.0.0/service-info.yaml#/components/schemas/Service'
