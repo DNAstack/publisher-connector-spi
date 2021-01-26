@@ -695,13 +695,13 @@ components:
           type: array
           description: List of the last five API calls made for a connection
           items:
-            $ref: '#/components/schemas/ApiCall'
+            $ref: '#/components/schemas/RecentCall'
     EndpointLogList:
       type: array
       description: List of all the logs associated with a connection (default up to 100)
       items:
-        $ref: '#/components/schemas/ApiCall'
-    ApiCall:
+        $ref: '#/components/schemas/RecentCall'
+    RecentCall:
       type: object
       description: Detailed status of an API call made for a connection
       required: [ 'operation', 'traceId', 'startTime', 'endTime', 'elapsedTimeMs', 'result' ]
