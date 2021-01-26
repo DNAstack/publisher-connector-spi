@@ -695,8 +695,13 @@ components:
           type: array
           description: List of the last five API calls made for a connection
           items:
-            $ref: '#/components/schemas/RecentCall'
-    RecentCall:
+            $ref: '#/components/schemas/ApiCall'
+    EndpointLogList:
+      type: array
+      description: List of all the logs associated with a connection (default up to 100)
+      items:
+        $ref: '#/components/schemas/ApiCall'
+    ApiCall:
       type: object
       description: Detailed status of an API call made for a connection
       required: [ 'operation', 'traceId', 'startTime', 'endTime', 'elapsedTimeMs', 'result' ]
@@ -719,33 +724,6 @@ components:
         result:
           type: string
           description: One of SUCCESS, TIMEOUT, ERROR
-        errorMessage:
-          type: string
-          description: Null if result is success, otherwise error info from the backend
-    EndpointLogList:
-      type: array
-      description: List of all the logs associated with a connection (default up to 100)
-      items:
-        $ref: '#/components/schemas/EndpointLog'
-    EndpointLog:
-      type: object
-      description: Log entry for a connection
-      properties:
-        operation:
-          type: string
-          description: English description of the purpose of the request
-        traceId:
-          type: string
-          description: Current Spring Cloud Sleuth trace ID
-        startTime:
-          type: string
-          format: date-time
-        endTime:
-          type: string
-          format: date-time
-        elapsedTimeMs:
-          type: integer
-          format: int64
         errorMessage:
           type: string
           description: Null if result is success, otherwise error info from the backend
