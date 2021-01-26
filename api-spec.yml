@@ -396,6 +396,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /connections/{connectionId}/logs:
+    get:
+      tags:
+        - connections
+      summary: Fetch the logs of the given connection
+      description: Returns the activity logs of the given data source connection.
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of activity logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndpointLogList'
+        '400':
+          description: The query is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No records for the given connectionID found
+        '500':
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -685,6 +719,33 @@ components:
         result:
           type: string
           description: One of SUCCESS, TIMEOUT, ERROR
+        errorMessage:
+          type: string
+          description: Null if result is success, otherwise error info from the backend
+    EndpointLogList:
+      type: array
+      description: List of all the logs associated with a connection (default up to 100)
+      items:
+        $ref: '#/components/schemas/EndpointLog'
+    EndpointLog:
+      type: object
+      description: Log entry for a connection
+      properties:
+        operation:
+          type: string
+          description: English description of the purpose of the request
+        traceId:
+          type: string
+          description: Current Spring Cloud Sleuth trace ID
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        elapsedTimeMs:
+          type: integer
+          format: int64
         errorMessage:
           type: string
           description: Null if result is success, otherwise error info from the backend
