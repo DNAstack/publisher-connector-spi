@@ -388,7 +388,54 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: No records for the given connectionID found
+          description: No records for the given connectionId found
+        '500':
+          description: An unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /connections/{connectionId}/logs:
+    get:
+      tags:
+        - connections
+      summary: Fetch the logs of the given connection
+      description: Returns the activity logs of the given data source connection.
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: endTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Timestamp of the newest entry to display, exclusive (defaults to current time)
+          required: false
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          description: Maximum number of log entries to return (defaults to 100)
+          required: false
+      responses:
+        '200':
+          description: List of activity logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionLogList'
+        '400':
+          description: The query is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No records for the given connectionId found
         '500':
           description: An unexpected error occurred
           content:
@@ -662,6 +709,11 @@ components:
           description: List of the last five API calls made for a connection
           items:
             $ref: '#/components/schemas/RecentCall'
+    ConnectionLogList:
+      type: array
+      description: List of all the logs associated with a connection (default up to 100)
+      items:
+        $ref: '#/components/schemas/RecentCall'
     RecentCall:
       type: object
       description: Detailed status of an API call made for a connection
