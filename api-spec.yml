@@ -412,6 +412,7 @@ paths:
           in: query
           schema:
             type: string
+            format: date-time
           description: Timestamp of the newest entry to display, exclusive (defaults to current time)
           required: false
         - name: limit
