@@ -3,7 +3,7 @@ openapi: '3.0.2'
 info:
   title: DNAStack Data Lake Connector SPI
   version: 0.1.0
-  description: The internal service interface implemented by Data Lake Connector services.
+  description: The internal Service Provider Interface implemented by Data Lake Connector services.
 
 security:
   - bearerAuth: []
@@ -16,17 +16,13 @@ tags:
   - name: connection-types
     description: Connection Types
 
-servers:
-  - url: https://connector.staging.dnastack.com
-  - url: https://connector.prod.dnastack.com
-
 paths:
   /service-info:
     get:
       tags:
         - service-info
-      summary: Show information the connector service
-      description: Show information the connector service
+      summary: Provides information about this connector service
+      description: Implementation of the GA4GH service-info API which provides information about this connector implementation
       operationId: getServiceInfo
       responses:
         '200':
@@ -61,7 +57,7 @@ paths:
       tags:
         - connector
       summary: Lists connections
-      description: Lists existing connector connections
+      description: Lists existing connections
       parameters:
         - name: connectionId
           in: path
@@ -136,10 +132,10 @@ paths:
     post:
       tags:
         - connector
-      summary: Creates a connection
-      description: Creates a new connector connection
+      summary: Creates a connection to a data source
+      description: Creates a new connection instance
       requestBody:
-        description: Connector to be created
+        description: Details of the connection to create. Typically includes the backend data source API location and authentication information.
         required: true
         content:
           application/json:
@@ -161,7 +157,7 @@ paths:
       tags:
         - connector
       summary: Returns a connection
-      description: Returns the configuration details of this connection
+      description: Returns the configuration details of this connection. Secrets such as passwords and access keys are not included in the response.
       parameters:
         - name: connectionId
           in: path
@@ -182,7 +178,7 @@ paths:
       tags:
         - connections
       summary: Lists the blobs within this connection
-      description: Lists the blobs within this connection
+      description: Lists the blobs within this connection. If this connection only supports tables, this endpoint returns an empty BlobList.
       parameters:
         - name: connectionId
           in: path
@@ -222,13 +218,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AccessURL'
+        '404':
+          description: The requested blob was not found within the requested connection.
 
   /connections/{connectionId}/tables:
     get:
       tags:
         - connections
-      summary: List Tables
-      description: Returns a list of tables that currently exist within this connection
+      summary: Lists tables
+      description: Lists the tables within the requested connection. If this connection does not contain any tables, returns an empty TablesList.
       operationId: listConnectionTables
       parameters:
         - name: connectionId
@@ -238,7 +236,7 @@ paths:
             type: string
       responses:
         '200':
-          description: A list of Tables
+          description: List of tables within this connection.
           content:
             application/json:
               schema:
@@ -254,18 +252,19 @@ paths:
     get:
       tags:
         - connections
-      summary: Get a Table for this connection
-      description: Returns the information about the Table identified by tableName for this connection
+      summary: Returns the schema of a table
+      description: Returns the schema of the table identified by tableName within the requested connection
       operationId: getTable
       parameters:
         - name: connectionId
           in: path
+          description: The ID of the connection to fetch the table from
           required: true
           schema:
             type: string
         - name: tableName
           in: path
-          description: Unique table name, unique to this implementation
+          description: The name of the table to fetch the schema from
           required: true
           schema:
             type: string
@@ -277,7 +276,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Table'
         '404':
-          description: The table doesn't exist
+          description: The requested table does not exist within the requested connection
         '500':
           description: An unexpected error occurred
           content:
@@ -289,18 +288,19 @@ paths:
     get:
       tags:
         - connections
-      summary: Fetch data from a Table
+      summary: Fetches data from a table
       description: Optional operation that returns data from a Table
       operationId: getData
       parameters:
         - name: connectionId
           in: path
+          description: The ID of the connection to fetch the table from
           required: true
           schema:
             type: string
         - name: tableName
           in: path
-          description: Unique Table name, unique to this implementation
+          description: The name of the table to fetch the data from
           required: true
           schema:
             type: string
@@ -312,7 +312,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/TableData'
         '404':
-          description: The table doesn't exist
+          description: The table does not exist within the requested connection
         '500':
           description: An unexpected error occurred
           content:
@@ -324,12 +324,13 @@ paths:
     post:
       tags:
         - connections
-      summary: Perform a search on Tables of this connection
+      summary: Performs a query over the tables of this connection (optional operation)
       description: Optional operation that accepts a SearchRequest and returns a TableData
       operationId: search
       parameters:
         - name: connectionId
           in: path
+          description: The ID of the connection to execute the query in
           required: true
           schema:
             type: string
@@ -354,7 +355,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: This server does not implement the search operation
+          description: This connection does not implement the search operation
         '500':
           description: An unexpected error occurred
           content:
@@ -366,8 +367,8 @@ paths:
     get:
       tags:
         - connections
-      summary: Fetch the health of the given connection
-      description: Returns the status based on the last five calls to Azure
+      summary: Describes the health of the given connection
+      description: Returns this connection's Connected/Intermittent/Disconnected status based on the outcome of the last five calls to the backend API
       parameters:
         - name: connectionId
           in: path
@@ -381,14 +382,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConnectionHealth'
-        '400':
-          description: The query is invalid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: No records for the given connectionId found
+          description: The requested connectionId does not exist
         '500':
           description: An unexpected error occurred
           content:
@@ -400,7 +395,7 @@ paths:
     get:
       tags:
         - connections
-      summary: Fetch the logs of the given connection
+      summary: Returns the logs of the given connection
       description: Returns the activity logs of the given data source connection.
       parameters:
         - name: connectionId
@@ -429,7 +424,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConnectionLogList'
         '400':
-          description: The query is invalid
+          description: The query parameters are invalid
           content:
             application/json:
               schema:
@@ -473,26 +468,37 @@ components:
         configuration:
           type: object
           description: |-
-            Configuration per the connector type
-            May include credentials (eg. service account keys or username / password) needed to access the underlying resource.
+            Configuration special to the connector type.
+            
+            The exact content of this object vary based on the needs of the backend API the connector implementaton is designed to connect to.
+            Typically includes network coordinates (eg. URL, hostname, port number, proxy configuraion) and credentials (eg. service account
+            keys or username / password) for accessing the underlying resource. Nothing outside this connector implementation needs to
+            understand the contents of this object.
+            
+            Implementors should be careful not to include secrets when sending out a connector configuration (secrets should be treated as
+            write-only properties).
         type:
           type: string
-          description: Refers to the id of ConnectionType
+          description: The type of this connection. Must match the id of a ConnectionType supported by this connector service.
           example: azure-blobstore
         version:
           type: string
-          description: The eTag for connection to support optimistic locking.
+          description: |-
+            Read-only property that changes every time this connection object is modified. Also returned in the eTag header when GETting the
+            connection. This value is required in the If-Match header of PATCH requests to support optimistic locking.
         createdAt:
           type: string
           format: date-time
-          description: The date and time when the connection was created.
+          description: The RFC3339 date and time when this connection was created.
+          example: 2021-01-01T11:12:13.000Z
         createdBy:
           type: string
           description: The user that created the connection.
         updatedAt:
           type: string
           format: date-time
-          description: The date and time when the connection was last updated.
+          description: The RFC3339 date and time when the connection was last updated.
+          example: 2021-01-01T11:12:13.000Z
         updatedBy:
           type: string
           description: The user that last updated the connection.
@@ -607,7 +613,7 @@ components:
           $ref: '#/components/schemas/ErrorList'
     Table:
       type: object
-      description: Describes a Table hosted by this search node.
+      description: Describes a table of data.
       required: [ 'name', 'dataModel']
       properties:
         name:
@@ -724,16 +730,21 @@ components:
           description: English description of the purpose of the request
         traceId:
           type: string
-          description: Current Spring Cloud Sleuth trace ID
+          description: The B3 traceId of the request detailed in this log. See https://github.com/openzipkin/b3-propagation for details.
         startTime:
           type: string
           format: date-time
+          description: The RFC3339 date and time when the backend API call was initiated.
+          example: 2021-01-01T11:12:13.000Z
         endTime:
           type: string
           format: date-time
+          description: The RFC3339 date and time when the backend API call completed (whether in success or failure) or timed out.
+          example: 2021-01-01T11:12:15.000Z
         elapsedTimeMs:
           type: integer
           format: int64
+          description: The difference between startTime and endTime in milliseconds.
         result:
           type: string
           description: One of SUCCESS, TIMEOUT, ERROR
