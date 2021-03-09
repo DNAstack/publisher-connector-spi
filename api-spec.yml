@@ -193,8 +193,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/BlobList'
 
-  /connections/{connectionId}/blobs/{blobId}/access/https:
-    get:
+  /connections/{connectionId}/blobs/access/https:
+    post:
       tags:
         - connections
       summary: Returns an access URL to fetch blob data
@@ -206,18 +206,21 @@ paths:
           required: true
           schema:
             type: string
-        - name: blobId
-          in: path
-          required: true
-          schema:
-            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: /components/schemas/BlobIdentifier
+        required: true
       responses:
         '200':
           description: An access URL to fetch blob data
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AccessURL'
+                $ref: '#/components/schemas/AccessUrlsResponse'
         '404':
           description: The requested blob was not found within the requested connection.
 
@@ -583,6 +586,17 @@ components:
             Until then, if implementors do choose such an algorithm (e.g. because it's implemented by their storage provider), they SHOULD use an existing
             standard `type` value such as `md5`, `etag`, `crc32c`, `trunc512`, or `sha1`.
           example: sha-256
+    BlobIdentifier:
+      type: object
+      description: Idenfities a blob within the scope of a given connection
+      required: [ 'name' ]
+      properties:
+        name:
+          type: string
+          description: The filename. This is typically a /-separated path.
+        version:
+          type: string
+          description: The version of the file. Only makes sense if this connection supports versioned files.
     AccessURL:
       type: object
       required: [ 'url' ]
@@ -599,6 +613,13 @@ components:
             These headers can be used to provide auth tokens required to fetch the object bytes.
           example:
             Authorization: Basic Z2E0Z2g6ZHJz
+    AccessUrlsResponse:
+      type: object
+      properties:
+        accessUrls:
+          type: array
+          items:
+            '$ref': /components/schemas/AccessURL
     TablesList:
       type: object
       required: [ 'tables' ]
