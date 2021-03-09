@@ -52,18 +52,12 @@ paths:
                   $ref: '#/components/schemas/ConnectionType'
 
   ## Connector Management
-  /connections/{connectionId}:
+  /connections:
     get:
       tags:
         - connector
       summary: Lists connections
       description: Lists existing connections
-      parameters:
-        - name: connectionId
-          in: path
-          required: true
-          schema:
-            type: string
       responses:
         '200':
           description: A list of connections
@@ -77,6 +71,48 @@ paths:
           description: Authentication Required
         '500':
           description: Internal Server Error
+    post:
+      tags:
+        - connector
+      summary: Creates a connection to a data source
+      description: Creates a new connection instance
+      requestBody:
+        description: Details of the connection to create. Typically includes the backend data source API location and authentication information.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Connection'
+      responses:
+        '200':
+          description: Connector connection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
+        '401':
+          description: Authentication Required
+        '500':
+          description: Internal Server Error
+  /connections/{connectionId}:
+    get:
+      tags:
+        - connector
+      summary: Returns a connection
+      description: Returns the configuration details of this connection. Secrets such as passwords and access keys are not included in the response.
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Configuration details of this connection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connection'
     delete:
       tags:
         - connector
@@ -128,49 +164,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Connection'
-  /connections:
-    post:
-      tags:
-        - connector
-      summary: Creates a connection to a data source
-      description: Creates a new connection instance
-      requestBody:
-        description: Details of the connection to create. Typically includes the backend data source API location and authentication information.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Connection'
-      responses:
-        '200':
-          description: Connector connection
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Connection'
-        '401':
-          description: Authentication Required
-        '500':
-          description: Internal Server Error
 
-    get:
-      tags:
-        - connector
-      summary: Returns a connection
-      description: Returns the configuration details of this connection. Secrets such as passwords and access keys are not included in the response.
-      parameters:
-        - name: connectionId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Configuration details of this connection
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Connection'
 
   ## Connector Instance / Connection Management
   /connections/{connectionId}/blobs:
