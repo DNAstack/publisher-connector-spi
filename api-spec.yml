@@ -77,7 +77,7 @@ paths:
       summary: Creates a connection to a data source
       description: Creates a new connection instance
       requestBody:
-        description: Details of the connection to create. Typically includes the backend data source API location and authentication information.
+        description: Details of the connection to create. Typically includes the backend data source API location and authentication information. If an ID is passed by the client it will be used, otherwise a randomly generated UUID will be created.
         required: true
         content:
           application/json:
@@ -92,6 +92,8 @@ paths:
                 $ref: '#/components/schemas/Connection'
         '401':
           description: Authentication Required
+        '409':
+          description: Conflict
         '500':
           description: Internal Server Error
   /connections/{connectionId}:
