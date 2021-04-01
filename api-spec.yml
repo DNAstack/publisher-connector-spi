@@ -635,7 +635,33 @@ components:
       properties:
         name:
           type: string
-          description: Table name
+          description: Fully qualified table name. Examples: ``, ``, `mydb.myschema.mytable`.
+          examples:
+            simple_table_name:
+              value: my_table
+              summary: Table name from a database that doesn't have multiple schemas or tables
+            two_part_table_name:
+              value: public.my_table
+              summary: Table name from a database that uses two part names like schema.table or database.table
+            three_part_table_name:
+              value: my_db.my_schema.my_table
+              summary: Table name from a database that uses three part names like catalog.schema.table or database.schema.table
+        flat_unique_name:
+          type: string
+          description: |
+            dlcon extension: a one-part identifier (no dots) for this table that's unique within the connection this table belongs to.
+            Some databases (like PostgreSQL) use three-part names but the first part is always the same within a given connection. Connectors
+            for such systems can use shorter flattened names that leave out the redundant prefix.
+          examples:
+            simple_table_name:
+              value: my_table
+              summary: Table name from a database that doesn't have multiple schemas or tables. Same as name.
+            two_part_table_name:
+              value: public_my_table
+              summary: Flattened table name from a database that uses two part names like schema.table or database.table
+            three_part_table_name:
+              value: my_db_my_schema_my_table
+              summary: Table name from a database that uses three part names like catalog.schema.table or database.schema.table
         description:
           type: string
           description: Optional description of the Table
