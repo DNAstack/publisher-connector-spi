@@ -41,6 +41,9 @@ paths:
         - connection-types
       summary: Lists the connection-types
       description: Lists the types of connections supported by this connector
+      security:
+        - connectionTypesAuth:
+            - dlcon:connection-type:read
       responses:
         '200':
           description: A list of connection-types
@@ -58,6 +61,9 @@ paths:
         - connector
       summary: Lists connections
       description: Lists existing connections
+      security:
+        - connectionsAuth:
+            - dlcon:connection:list
       responses:
         '200':
           description: A list of connections
@@ -76,6 +82,9 @@ paths:
         - connector
       summary: Creates a connection to a data source
       description: Creates a new connection instance
+      security:
+        - connectionsAuth:
+            - dlcon:connection:write
       requestBody:
         description: Details of the connection to create. Typically includes the backend data source API location and authentication information. If an ID is passed by the client it will be used, otherwise a randomly generated UUID will be created.
         required: true
@@ -102,6 +111,9 @@ paths:
         - connector
       summary: Returns a connection
       description: Returns the configuration details of this connection. Secrets such as passwords and access keys are not included in the response.
+      security:
+        - connectionsAuth:
+            - dlcon:connection:read
       parameters:
         - name: connectionId
           in: path
@@ -120,6 +132,9 @@ paths:
         - connector
       summary: Deletes a connection
       description: Deletes a connection
+      security:
+        - connectionsAuth:
+            - dlcon:connection:write
       parameters:
         - name: connectionId
           in: path
@@ -138,6 +153,9 @@ paths:
         Modifies the existing configuration details of this connection by applying the given JSON Patch document to it.
         Request body must be a [JSON Patch](http://jsonpatch.com/) document describing changes to a Connection object.
         Response headers conform to [RFC 5789](https://tools.ietf.org/html/rfc5789).
+      security:
+        - connectionsAuth:
+            - dlcon:connection:write
       parameters:
         - name: connectionId
           in: path
@@ -175,6 +193,9 @@ paths:
         - connections
       summary: Lists the blobs within this connection
       description: Lists the blobs within this connection. If this connection only supports tables, this endpoint returns an empty BlobList.
+      security:
+        - dataConsumerAuth:
+          - dlcon:blob:info
       parameters:
         - name: connectionId
           in: path
@@ -196,6 +217,9 @@ paths:
       summary: Returns an access URL to fetch blob data
       description: |-
         Returns an Access URL describing how to fetch the blob data within this connection.
+      security:
+        - dataConsumerAuth:
+          - dlcon:blob:data
       parameters:
         - name: connectionId
           in: path
@@ -227,6 +251,9 @@ paths:
       summary: Lists tables
       description: Lists the tables within the requested connection. If this connection does not contain any tables, returns an empty TablesList.
       operationId: listConnectionTables
+      security:
+        - dataConsumerAuth:
+            - dlcon:table:info
       parameters:
         - name: connectionId
           in: path
@@ -254,6 +281,9 @@ paths:
       summary: Returns the schema of a table
       description: Returns the schema of the table identified by tableName within the requested connection
       operationId: getTable
+      security:
+        - dataConsumerAuth:
+            - dlcon:table:info
       parameters:
         - name: connectionId
           in: path
@@ -290,6 +320,9 @@ paths:
       summary: Fetches data from a table
       description: Optional operation that returns data from a Table
       operationId: getData
+      security:
+        - dataConsumerAuth:
+            - dlcon:table:data
       parameters:
         - name: connectionId
           in: path
@@ -368,6 +401,9 @@ paths:
         - connections
       summary: Describes the health of the given connection
       description: Returns this connection's Connected/Intermittent/Disconnected status based on the outcome of the last five calls to the backend API
+      security:
+        - connectionsAuth:
+            - dlcon:connection:read
       parameters:
         - name: connectionId
           in: path
@@ -396,6 +432,9 @@ paths:
         - connections
       summary: Returns the logs of the given connection
       description: Returns the activity logs of the given data source connection.
+      security:
+        - connectionsAuth:
+            - dlcon:connection:read
       parameters:
         - name: connectionId
           in: path
@@ -442,6 +481,33 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
+      bearerFormat: JWT
+    connectionTypesAuth:
+      type: "oauth2"
+      flows:
+        clientCredentials:
+          tokenUrl: "https://${OAUTH2_AUTH_SERVER}/oauth/token"
+          scopes:
+            "dlcon:connection-type:read": "For operations on connection types (eg. definitions of which kinds of connectors can be created such as 'Azure Storage', 'PosgreSQL', 'S3 Storage', ...)"
+    connectionsAuth:
+      type: "oauth2"
+      flows:
+        clientCredentials:
+          tokenUrl: "https://${OAUTH2_AUTH_SERVER}/oauth/token"
+          scopes:
+            "dlcon:connection:list": "List connections"
+            "dlcon:connection:read": "Get connection data"
+            "dlcon:connection:write": "Write or update a connection"
+    dataConsumerAuth:
+      type: "oauth2"
+      flows:
+        clientCredentials:
+          tokenUrl: "https://${OAUTH2_AUTH_SERVER}/oauth/token"
+          scopes:
+            "dlcon:blob:info": "get blob metadata"
+            "dlcon:blob:data": "get an AccessUrl for a blob"
+            "dlcon:table:info": "list tables and view schemas"
+            "dlcon:table:data": "download table data and run queries (if queries are supported)"
   schemas:
     ConnectionType:
       type: object
@@ -796,3 +862,27 @@ components:
           description: Null if result is success, otherwise error info from the backend
     ServiceInfo:
       $ref: 'https://raw.githubusercontent.com/ga4gh-discovery/ga4gh-service-info/v1.0.0/service-info.yaml#/components/schemas/Service'
+    SecurityRequirements:
+      type: object
+      properties:
+        audience:
+          type: string
+          description: |-
+            All connectors share a common audience because components inside Data Lake that need to access some connector
+            need equal access to all connectors. (Data Consumers are granted access by collection, not by data source).
+          example:
+            - "http://dlcon.local" by default
+            - "https://dlcon.${SPACE_DNS_NAME}" in real environments
+        resources:
+          type: string
+          description: |-
+            Resource URLs are structured to meet these constraints:
+
+            1. Compatible with the JWT audience
+            2. Allows a single resource grant to cover all connectors
+            3. Permit fine-grained access control when needed
+          example:
+            - General structure of a resource URL for a Data Lake connector resource:
+            {jwt-audience-url}/{connection-type}/{connection-id}/{object-name} -- everything on the given connection type
+
+
