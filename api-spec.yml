@@ -582,14 +582,13 @@ components:
       description: |-
         This Blob object is styled after the GA4GH DRS API DrsObject.
         The `AccessMethod` section is omitted and the blob behaves as `https` is the sole available access method.
-      required: [ 'id', 'size', 'createdTime', 'checksums' ]
+      required: [ 'path', 'size', 'createdTime', 'checksums' ]
       properties:
-        id:
-          type: string
-          description: An identifier unique to this `blob`.
         path:
           type: string
-          description: The path to the `blob` on the data source.
+          description: |-
+            The path name of this blob within its data source; some backend systems call this the 'object key'.
+            Within a Connection, no two Blobs should share the same path.
         size:
           type: integer
           format: int64
