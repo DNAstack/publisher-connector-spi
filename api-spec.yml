@@ -195,7 +195,7 @@ paths:
       description: Lists the blobs within this connection. If this connection only supports tables, this endpoint returns an empty BlobList.
       security:
         - dataConsumerAuth:
-          - dlcon:blob:info
+            - dlcon:blob:info
       parameters:
         - name: connectionId
           in: path
@@ -219,7 +219,7 @@ paths:
         Returns an Access URL describing how to fetch the blob data within this connection.
       security:
         - dataConsumerAuth:
-          - dlcon:blob:data
+            - dlcon:blob:data
       parameters:
         - name: connectionId
           in: path
@@ -534,12 +534,12 @@ components:
           type: object
           description: |-
             Configuration special to the connector type.
-            
+
             The exact content of this object vary based on the needs of the backend API the connector implementaton is designed to connect to.
             Typically includes network coordinates (eg. URL, hostname, port number, proxy configuraion) and credentials (eg. service account
             keys or username / password) for accessing the underlying resource. Nothing outside this connector implementation needs to
             understand the contents of this object.
-            
+
             Implementors should be careful not to include secrets when sending out a connector configuration (secrets should be treated as
             write-only properties).
         type:
@@ -700,33 +700,66 @@ components:
       properties:
         name:
           type: string
-          description: Fully qualified table name. Examples: ``, ``, `mydb.myschema.mytable`.
-          examples:
-            simple_table_name:
-              value: my_table
-              summary: Table name from a database that doesn't have multiple schemas or tables
-            two_part_table_name:
-              value: public.my_table
-              summary: Table name from a database that uses two part names like schema.table or database.table
-            three_part_table_name:
-              value: my_db.my_schema.my_table
-              summary: Table name from a database that uses three part names like catalog.schema.table or database.schema.table
+          description: |
+            Fully qualified table name.
+
+            Examples:
+
+            **Simple table name**
+
+            Table name from a database that doesn't have multiple schemas or tables
+
+            ```
+            my_table
+            ```
+
+            **Two part table name**
+
+            Table name from a database that uses two part names like schema.table or database.table
+
+            ```
+            public.my_table
+            ```
+
+            **Three part table name**
+
+            Table name from a database that uses three part names like catalog.schema.table or database.schema.table
+
+            ```
+            my_db.my_schema.my_table
+            ```
         flat_unique_name:
           type: string
           description: |
             dlcon extension: a one-part identifier (no dots) for this table that's unique within the connection this table belongs to.
             Some databases (like PostgreSQL) use three-part names but the first part is always the same within a given connection. Connectors
             for such systems can use shorter flattened names that leave out the redundant prefix.
-          examples:
-            simple_table_name:
-              value: my_table
-              summary: Table name from a database that doesn't have multiple schemas or tables. Same as name.
-            two_part_table_name:
-              value: public_my_table
-              summary: Flattened table name from a database that uses two part names like schema.table or database.table
-            three_part_table_name:
-              value: my_db_my_schema_my_table
-              summary: Table name from a database that uses three part names like catalog.schema.table or database.schema.table
+
+            Examples:
+
+            **Simple table name**
+
+            Table name from a database that doesn't have multiple schemas or tables
+
+            ```
+            my_table
+            ```
+
+            **Two part table name**
+
+            Table name from a database that uses two part names like schema.table or database.table
+
+            ```
+            public_my_table
+            ```
+
+            **Three part table name**
+
+            Table name from a database that uses three part names like catalog.schema.table or database.schema.table
+
+            ```
+            my_db_my_schema_my_table
+            ```
         description:
           type: string
           description: Optional description of the Table
@@ -869,9 +902,10 @@ components:
           description: |-
             All connectors share a common audience because components inside Data Lake that need to access some connector
             need equal access to all connectors. (Data Consumers are granted access by collection, not by data source).
-          example:
-            - "http://dlcon.local" by default
-            - "https://dlcon.${SPACE_DNS_NAME}" in real environments
+
+            For local development, use `http://dlcon.local`
+
+            For actual deployments, use `https://dlcon.${SPACE_DNS_NAME}`
         resources:
           type: string
           description: |-
@@ -880,8 +914,5 @@ components:
             1. Compatible with the JWT audience
             2. Allows a single resource grant to cover all connectors
             3. Permit fine-grained access control when needed
-          example:
-            - General structure of a resource URL for a Data Lake connector resource:
-            {jwt-audience-url}/{connection-type}/{connection-id}/{object-name} -- everything on the given connection type
 
-
+            The general structure of a resource URL is `{jwt-audience-url}/{connection-type}/{connection-id}/{object-name}`
