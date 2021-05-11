@@ -1,9 +1,12 @@
 openapi: '3.0.2'
 
 info:
-  title: DNAStack Data Lake Connector SPI
+  title: DNAStack Publisher Connector SPI
   version: 0.1.0
-  description: The internal Service Provider Interface implemented by Data Lake Connector services.
+  description: The internal Service Provider Interface implemented by DNAstack Publisher Connector services.
+  license:
+    name: Apache 2.0
+    url: "https://www.apache.org/licenses/LICENSE-2.0.html"
 
 security:
   - bearerAuth: []
@@ -900,7 +903,7 @@ components:
         audience:
           type: string
           description: |-
-            All connectors share a common audience because components inside Data Lake that need to access some connector
+            All connectors share a common audience because components inside Publisher that need to access some connector
             need equal access to all connectors. (Data Consumers are granted access by collection, not by data source).
 
             For local development, use `http://dlcon.local`
