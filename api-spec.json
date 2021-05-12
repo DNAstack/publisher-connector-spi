@@ -1,0 +1,1255 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "DNAStack Publisher Connector SPI",
+    "version": "0.1.0",
+    "description": "The internal Service Provider Interface implemented by DNAstack Publisher Connector services.",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "connector",
+      "description": "Connector APIs"
+    },
+    {
+      "name": "connections",
+      "description": "Connector Instance / Connection APIs"
+    },
+    {
+      "name": "connection-types",
+      "description": "Connection Types"
+    }
+  ],
+  "paths": {
+    "/service-info": {
+      "get": {
+        "tags": [
+          "service-info"
+        ],
+        "summary": "Provides information about this connector service",
+        "description": "Implementation of the GA4GH service-info API which provides information about this connector implementation",
+        "operationId": "getServiceInfo",
+        "responses": {
+          "200": {
+            "description": "Show information about this Connector service.\nUse `\"type\": { \"group\": \"com.dnastack\", \"artifact\": \"datalake\", \"version\": \"1.0.0\" }` when implementing this specification directly.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connection-types": {
+      "get": {
+        "tags": [
+          "connection-types"
+        ],
+        "summary": "Lists the connection-types",
+        "description": "Lists the types of connections supported by this connector",
+        "security": [
+          {
+            "connectionTypesAuth": [
+              "dlcon:connection-type:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of connection-types",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConnectionType"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connections": {
+      "get": {
+        "tags": [
+          "connector"
+        ],
+        "summary": "Lists connections",
+        "description": "Lists existing connections",
+        "security": [
+          {
+            "connectionsAuth": [
+              "dlcon:connection:list"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of connections",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Connection"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication Required"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "connector"
+        ],
+        "summary": "Creates a connection to a data source",
+        "description": "Creates a new connection instance",
+        "security": [
+          {
+            "connectionsAuth": [
+              "dlcon:connection:write"
+            ]
+          }
+        ],
+        "requestBody": {
+          "description": "Details of the connection to create. Typically includes the backend data source API location and authentication information. If an ID is passed by the client it will be used, otherwise a randomly generated UUID will be created.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Connection"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connector connection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Connection"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication Required"
+          },
+          "409": {
+            "description": "Conflict"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/connections/{connectionId}": {
+      "get": {
+        "tags": [
+          "connector"
+        ],
+        "summary": "Returns a connection",
+        "description": "Returns the configuration details of this connection. Secrets such as passwords and access keys are not included in the response.",
+        "security": [
+          {
+            "connectionsAuth": [
+              "dlcon:connection:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuration details of this connection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Connection"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "connector"
+        ],
+        "summary": "Deletes a connection",
+        "description": "Deletes a connection",
+        "security": [
+          {
+            "connectionsAuth": [
+              "dlcon:connection:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deletion OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "connector"
+        ],
+        "summary": "Updates a connection",
+        "description": "Updates the configuration details of this connection.\nModifies the existing configuration details of this connection by applying the given JSON Patch document to it.\nRequest body must be a [JSON Patch](http://jsonpatch.com/) document describing changes to a Connection object.\nResponse headers conform to [RFC 5789](https://tools.ietf.org/html/rfc5789).",
+        "security": [
+          {
+            "connectionsAuth": [
+              "dlcon:connection:write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "https://json.schemastore.org/json-patch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Update OK",
+            "headers": {
+              "Content-Location": {
+                "schema": {
+                  "type": "string",
+                  "description": "URL of the Connection that was patched"
+                }
+              },
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "description": "New ETag of the Connection after the patch has been applied"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Connection"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connections/{connectionId}/blobs": {
+      "get": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Lists the blobs within this connection",
+        "description": "Lists the blobs within this connection. If this connection only supports tables, this endpoint returns an empty BlobList.",
+        "security": [
+          {
+            "dataConsumerAuth": [
+              "dlcon:blob:info"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of blobs within this connection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlobList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connections/{connectionId}/blobs/access/https": {
+      "post": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Returns an access URL to fetch blob data",
+        "description": "Returns an Access URL describing how to fetch the blob data within this connection.",
+        "security": [
+          {
+            "dataConsumerAuth": [
+              "dlcon:blob:data"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "/components/schemas/BlobIdentifier"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "An access URL to fetch blob data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessUrlsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested blob was not found within the requested connection."
+          }
+        }
+      }
+    },
+    "/connections/{connectionId}/tables": {
+      "get": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Lists tables",
+        "description": "Lists the tables within the requested connection. If this connection does not contain any tables, returns an empty TablesList.",
+        "operationId": "listConnectionTables",
+        "security": [
+          {
+            "dataConsumerAuth": [
+              "dlcon:table:info"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tables within this connection.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TablesList"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connections/{connectionId}/table/{tableName}/info": {
+      "get": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Returns the schema of a table",
+        "description": "Returns the schema of the table identified by tableName within the requested connection",
+        "operationId": "getTable",
+        "security": [
+          {
+            "dataConsumerAuth": [
+              "dlcon:table:info"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "description": "The ID of the connection to fetch the table from",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tableName",
+            "in": "path",
+            "description": "The name of the table to fetch the schema from",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A Table",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Table"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested table does not exist within the requested connection"
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connections/{connectionId}/table/{tableName}/data": {
+      "get": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Fetches data from a table",
+        "description": "Optional operation that returns data from a Table",
+        "operationId": "getData",
+        "security": [
+          {
+            "dataConsumerAuth": [
+              "dlcon:table:data"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "description": "The ID of the connection to fetch the table from",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tableName",
+            "in": "path",
+            "description": "The name of the table to fetch the data from",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data from the Table",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableData"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The table does not exist within the requested connection"
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connections/{connectionId}/search": {
+      "post": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Performs a query over the tables of this connection (optional operation)",
+        "description": "Optional operation that accepts a SearchRequest and returns a TableData",
+        "operationId": "search",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "description": "The ID of the connection to execute the query in",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Query to execute",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Query results returned as TableData",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The query is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "This connection does not implement the search operation"
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connections/{connectionId}/health": {
+      "get": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Describes the health of the given connection",
+        "description": "Returns this connection's Connected/Intermittent/Disconnected status based on the outcome of the last five calls to the backend API",
+        "security": [
+          {
+            "connectionsAuth": [
+              "dlcon:connection:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Object with overall status, and a list of objects with details on the last five calls",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionHealth"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested connectionId does not exist"
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connections/{connectionId}/logs": {
+      "get": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Returns the logs of the given connection",
+        "description": "Returns the activity logs of the given data source connection.",
+        "security": [
+          {
+            "connectionsAuth": [
+              "dlcon:connection:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endTime",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Timestamp of the newest entry to display, exclusive (defaults to current time)",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Maximum number of log entries to return (defaults to 100)",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of activity logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionLogList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The query parameters are invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No records for the given connectionId found"
+          },
+          "500": {
+            "description": "An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "connectionTypesAuth": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://${OAUTH2_AUTH_SERVER}/oauth/token",
+            "scopes": {
+              "dlcon:connection-type:read": "For operations on connection types (eg. definitions of which kinds of connectors can be created such as 'Azure Storage', 'PosgreSQL', 'S3 Storage', ...)"
+            }
+          }
+        }
+      },
+      "connectionsAuth": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://${OAUTH2_AUTH_SERVER}/oauth/token",
+            "scopes": {
+              "dlcon:connection:list": "List connections",
+              "dlcon:connection:read": "Get connection data",
+              "dlcon:connection:write": "Write or update a connection"
+            }
+          }
+        }
+      },
+      "dataConsumerAuth": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://${OAUTH2_AUTH_SERVER}/oauth/token",
+            "scopes": {
+              "dlcon:blob:info": "get blob metadata",
+              "dlcon:blob:data": "get an AccessUrl for a blob",
+              "dlcon:table:info": "list tables and view schemas",
+              "dlcon:table:data": "download table data and run queries (if queries are supported)"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ConnectionType": {
+        "type": "object",
+        "required": [
+          "id",
+          "icon"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Connection Type",
+            "example": "azure-blobstore"
+          },
+          "icon": {
+            "type": "string",
+            "description": "URL location icon for this kind of connection",
+            "example": "https://storage.googleapis.com/data-lake/icons/azure-blobstore.jpg"
+          }
+        }
+      },
+      "Connection": {
+        "type": "object",
+        "required": [
+          "id",
+          "configuration",
+          "type",
+          "createdAt",
+          "createdBy"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique connection identifier",
+            "format": "uuid",
+            "example": "615e48e5-2cf9-4968-95cd-2a61013b563b"
+          },
+          "configuration": {
+            "type": "object",
+            "description": "Configuration special to the connector type.\n\nThe exact content of this object vary based on the needs of the backend API the connector implementaton is designed to connect to.\nTypically includes network coordinates (eg. URL, hostname, port number, proxy configuraion) and credentials (eg. service account\nkeys or username / password) for accessing the underlying resource. Nothing outside this connector implementation needs to\nunderstand the contents of this object.\n\nImplementors should be careful not to include secrets when sending out a connector configuration (secrets should be treated as\nwrite-only properties)."
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of this connection. Must match the id of a ConnectionType supported by this connector service.",
+            "example": "azure-blobstore"
+          },
+          "version": {
+            "type": "string",
+            "description": "Read-only property that changes every time this connection object is modified. Also returned in the eTag header when GETting the\nconnection. This value is required in the If-Match header of PATCH requests to support optimistic locking."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The RFC3339 date and time when this connection was created.",
+            "example": "2021-01-01T11:12:13.000Z"
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "The user that created the connection."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The RFC3339 date and time when the connection was last updated.",
+            "example": "2021-01-01T11:12:13.000Z"
+          },
+          "updatedBy": {
+            "type": "string",
+            "description": "The user that last updated the connection."
+          }
+        }
+      },
+      "BlobList": {
+        "type": "object",
+        "required": [
+          "blobList"
+        ],
+        "properties": {
+          "blobList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Blob"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "Blob": {
+        "type": "object",
+        "description": "This Blob object is styled after the GA4GH DRS API DrsObject.\nThe `AccessMethod` section is omitted and the blob behaves as `https` is the sole available access method.",
+        "required": [
+          "path",
+          "size",
+          "createdTime",
+          "checksums"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The path name of this blob within its data source; some backend systems call this the 'object key'.\nWithin a Connection, no two Blobs should share the same path."
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "For blobs, the blob size in bytes."
+          },
+          "createdTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of content creation in RFC3339.\n(This is the creation time of the underlying content, not of the JSON object.)"
+          },
+          "updatedTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of content update in RFC3339, identical to `createdTime` in systems that do not support updates. (This is the update time of the underlying content, not of the JSON object.)"
+          },
+          "version": {
+            "type": "string",
+            "description": "A string representing a version. (Some systems may use checksum, a RFC3339 timestamp, or an incrementing version number.)"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "A string providing the mime-type of the `Blob`.",
+            "example": "application/json"
+          },
+          "checksums": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Checksum"
+            },
+            "description": "The checksum of the `DrsObject`. At least one checksum must be provided. For blobs, the checksum is computed over the bytes in the blob."
+          },
+          "region": {
+            "type": "string",
+            "description": "Name of the region in the cloud service provider that the object belongs to.",
+            "example": "us-east-1"
+          },
+          "description": {
+            "type": "string",
+            "description": "A human readable description of the `Blob`."
+          }
+        }
+      },
+      "Checksum": {
+        "type": "object",
+        "required": [
+          "checksum",
+          "type"
+        ],
+        "properties": {
+          "checksum": {
+            "type": "string",
+            "description": "The hex-string encoded checksum for the data"
+          },
+          "type": {
+            "type": "string",
+            "description": "The digest method used to create the checksum. The value (e.g. `sha-256`) SHOULD be listed as `Hash Name String` in the https://www.iana.org/assignments/named-information/named-information.xhtml#hash-alg[IANA Named Information Hash Algorithm Registry]. Other values MAY be used, as long as implementors are aware of the issues discussed in https://tools.ietf.org/html/rfc6920#section-9.4[RFC6920]. GA4GH may provide more explicit guidance for use of non-IANA-registered algorithms in the future. Until then, if implementors do choose such an algorithm (e.g. because it's implemented by their storage provider), they SHOULD use an existing standard `type` value such as `md5`, `etag`, `crc32c`, `trunc512`, or `sha1`.",
+            "example": "sha-256"
+          }
+        }
+      },
+      "BlobIdentifier": {
+        "type": "object",
+        "description": "Idenfities a blob within the scope of a given connection",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The filename. This is typically a /-separated path."
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the file. Only makes sense if this connection supports versioned files."
+          }
+        }
+      },
+      "AccessURL": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "A fully resolvable URL that can be used to fetch the actual object bytes."
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "An optional list of headers to include in the HTTP request to `url`. These headers can be used to provide auth tokens required to fetch the object bytes.",
+            "example": {
+              "Authorization": "Basic Z2E0Z2g6ZHJz"
+            }
+          }
+        }
+      },
+      "AccessUrlsResponse": {
+        "type": "object",
+        "properties": {
+          "accessUrls": {
+            "type": "array",
+            "items": {
+              "$ref": "/components/schemas/AccessURL"
+            }
+          }
+        }
+      },
+      "TablesList": {
+        "type": "object",
+        "required": [
+          "tables"
+        ],
+        "properties": {
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Table"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "errors": {
+            "$ref": "#/components/schemas/ErrorList"
+          }
+        }
+      },
+      "Table": {
+        "type": "object",
+        "description": "Describes a table of data.",
+        "required": [
+          "name",
+          "dataModel"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Fully qualified table name.\n\nExamples:\n\n**Simple table name**\n\nTable name from a database that doesn't have multiple schemas or tables\n\n```\nmy_table\n```\n\n**Two part table name**\n\nTable name from a database that uses two part names like schema.table or database.table\n\n```\npublic.my_table\n```\n\n**Three part table name**\n\nTable name from a database that uses three part names like catalog.schema.table or database.schema.table\n\n```\nmy_db.my_schema.my_table\n```\n"
+          },
+          "flat_unique_name": {
+            "type": "string",
+            "description": "dlcon extension: a one-part identifier (no dots) for this table that's unique within the connection this table belongs to.\nSome databases (like PostgreSQL) use three-part names but the first part is always the same within a given connection. Connectors\nfor such systems can use shorter flattened names that leave out the redundant prefix.\n\nExamples:\n\n**Simple table name**\n\nTable name from a database that doesn't have multiple schemas or tables\n\n```\nmy_table\n```\n\n**Two part table name**\n\nTable name from a database that uses two part names like schema.table or database.table\n\n```\npublic_my_table\n```\n\n**Three part table name**\n\nTable name from a database that uses three part names like catalog.schema.table or database.schema.table\n\n```\nmy_db_my_schema_my_table\n```\n"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description of the Table"
+          },
+          "dataModel": {
+            "$ref": "http://json-schema.org/draft-07/schema#"
+          },
+          "errors": {
+            "$ref": "#/components/schemas/ErrorList"
+          }
+        }
+      },
+      "TableData": {
+        "type": "object",
+        "description": "A paginated collection of tabular data",
+        "required": [
+          "dataModel",
+          "data"
+        ],
+        "properties": {
+          "dataModel": {
+            "$ref": "http://json-schema.org/draft-07/schema#"
+          },
+          "data": {
+            "type": "array",
+            "description": "Page of JSON values, each adhering to the schema given in the `dataModel` property",
+            "items": {
+              "type": "object"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "errors": {
+            "$ref": "#/components/schemas/ErrorList"
+          }
+        }
+      },
+      "SearchRequest": {
+        "type": "object",
+        "description": "Request body containing an SQL query with zero or more positional parameters.",
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Query in SQL. Supported SQL grammar, data types, and functions are described in [the specification](https://github.com/ga4gh-discovery/ga4gh-search/blob/develop/SEARCHSPEC.md#query).",
+            "example": "SELECT some_string, some_num FROM a_table WHERE some_string=? AND some_num=?"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {},
+            "description": "Positional parameters for the query in `query` property.",
+            "example": [
+              "hello",
+              42
+            ]
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "The response body when no part of the request can be fulfilled",
+        "properties": {
+          "errors": {
+            "$ref": "#/components/schemas/ErrorList"
+          }
+        }
+      },
+      "ErrorList": {
+        "type": "array",
+        "description": "List of errors encountered",
+        "items": {
+          "$ref": "#/components/schemas/Error"
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "The 'source' field should only be present when the error originated in an attached data source backing the Search API. The value of source can be any of the following: 1. A fully qualified table `name` 2. Any prefix of a table `name` that ends before a `.` character in the name. For example if there is a table called `foo.bar.baz`, valid prefixes would be `foo` and `foo.bar`. Partial prefixes which do not end just before a `.`, are not valid. For example: `foo.b` and `fo` are not allowed. If the error originated inside the Search API implementation and is not associated with any particular table or group of tables, then the source must be absent. An example of this would be an error occurring from a bug in the implementation. Additionally, if the error is due to a bad request from the client, the source must also be absent.\n"
+          },
+          "title": {
+            "type": "string",
+            "description": "A short, human-readable description of the error.\nThe value should not change from occurrence to occurrence of an error, except for purposes of localization.\n",
+            "example": "Internal server error"
+          },
+          "detail": {
+            "type": "string",
+            "description": "A human-readable explanation specific to this occurrence of the error.",
+            "example": "Internal server error"
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "nextPageUrl": {
+            "type": "string",
+            "description": "URL pointing to the next page of the same Table. Null or absent on last page.",
+            "format": "uri"
+          }
+        }
+      },
+      "ConnectionHealth": {
+        "type": "object",
+        "required": [
+          "status",
+          "recentCallList"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Overall health for the given connectionId - One of UP, INTERMITTENT or DOWN"
+          },
+          "recentCallList": {
+            "type": "array",
+            "description": "List of the last five API calls made for a connection",
+            "items": {
+              "$ref": "#/components/schemas/RecentCall"
+            }
+          }
+        }
+      },
+      "ConnectionLogList": {
+        "type": "array",
+        "description": "List of all the logs associated with a connection (default up to 100)",
+        "items": {
+          "$ref": "#/components/schemas/RecentCall"
+        }
+      },
+      "RecentCall": {
+        "type": "object",
+        "description": "Detailed status of an API call made for a connection",
+        "required": [
+          "operation",
+          "traceId",
+          "startTime",
+          "endTime",
+          "elapsedTimeMs",
+          "result"
+        ],
+        "properties": {
+          "operation": {
+            "type": "string",
+            "description": "English description of the purpose of the request"
+          },
+          "traceId": {
+            "type": "string",
+            "description": "The B3 traceId of the request detailed in this log. See https://github.com/openzipkin/b3-propagation for details."
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The RFC3339 date and time when the backend API call was initiated.",
+            "example": "2021-01-01T11:12:13.000Z"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The RFC3339 date and time when the backend API call completed (whether in success or failure) or timed out.",
+            "example": "2021-01-01T11:12:15.000Z"
+          },
+          "elapsedTimeMs": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The difference between startTime and endTime in milliseconds."
+          },
+          "result": {
+            "type": "string",
+            "description": "One of SUCCESS, TIMEOUT, ERROR"
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Null if result is success, otherwise error info from the backend"
+          }
+        }
+      },
+      "ServiceInfo": {
+        "$ref": "https://raw.githubusercontent.com/ga4gh-discovery/ga4gh-service-info/v1.0.0/service-info.yaml#/components/schemas/Service"
+      },
+      "SecurityRequirements": {
+        "type": "object",
+        "properties": {
+          "audience": {
+            "type": "string",
+            "description": "All connectors share a common audience because components inside Publisher that need to access some connector\nneed equal access to all connectors. (Data Consumers are granted access by collection, not by data source).\n\nFor local development, use `http://dlcon.local`\n\nFor actual deployments, use `https://dlcon.${SPACE_DNS_NAME}`"
+          },
+          "resources": {
+            "type": "string",
+            "description": "Resource URLs are structured to meet these constraints:\n\n1. Compatible with the JWT audience\n2. Allows a single resource grant to cover all connectors\n3. Permit fine-grained access control when needed\n\nThe general structure of a resource URL is `{jwt-audience-url}/{connection-type}/{connection-id}/{object-name}`"
+          }
+        }
+      }
+    }
+  }
+}
