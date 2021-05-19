@@ -42,7 +42,7 @@ paths:
     get:
       tags:
         - connection-types
-      summary: Lists the connection-types
+      summary: Lists the connection types
       description: Lists the types of connections supported by this connector
       security:
         - connectionTypesAuth:
@@ -514,12 +514,16 @@ components:
   schemas:
     ConnectionType:
       type: object
-      required: [ 'id', 'icon' ]
+      required: [ 'id', 'name', 'icon' ]
       properties:
         id:
           type: string
           description: Connection Type
           example: azure-blobstore
+        name:
+          type: string
+          description: Friendly name of this connection type suitable for display in user interfaces
+          example: "Azure Blob Storage"
         icon:
           type: string
           description: URL location icon for this kind of connection
