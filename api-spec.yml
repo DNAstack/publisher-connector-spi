@@ -767,6 +767,12 @@ components:
             ```
             my_db_my_schema_my_table
             ```
+        approximate_row_count:
+          type: integer
+          description: |
+            Estimated number of rows in this table, likely gathered from database statistics.
+            May be omitted if the underlying storage system does not provide an inexpensive
+            mechanism for obtaining an estimated row count.
         description:
           type: string
           description: Optional description of the Table
