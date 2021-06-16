@@ -479,6 +479,43 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  "/frontend/datasource/new?frontend={parentOrigin}":
+    get:
+      tags:
+        - connector-iframe
+      summary: Returns the connector UI in create mode.
+      description: Returns the connector UI in create mode which gets loaded into
+        an iframe in Publisher's window.
+      parameters:
+        - name: frontend
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Connector UI in create mode is loaded and displayed.
+  "/frontend/datasource/edit?id={connectorId}&frontend={parentOrigin}":
+    get:
+      tags:
+        - connector-iframe
+      summary: Returns the connector UI in edit mode.
+      description: Returns the connector UI in edit mode which gets loaded into an
+        iframe in Publisher's window.
+      parameters:
+        - name: connectorId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: frontend
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Connector UI in edit mode is loaded and displayed.
 components:
   securitySchemes:
     bearerAuth:
