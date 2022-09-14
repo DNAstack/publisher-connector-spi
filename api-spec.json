@@ -975,10 +975,6 @@
           "name": {
             "type": "string",
             "description": "The filename. This is typically a /-separated path."
-          },
-          "version": {
-            "type": "string",
-            "description": "The version of the file. Only makes sense if this connection supports versioned files."
           }
         }
       },
