@@ -919,10 +919,6 @@
             "format": "date-time",
             "description": "Timestamp of content update in RFC3339, identical to `createdTime` in systems that do not support updates. (This is the update time of the underlying content, not of the JSON object.)"
           },
-          "version": {
-            "type": "string",
-            "description": "A string representing a version. (Some systems may use checksum, a RFC3339 timestamp, or an incrementing version number.)"
-          },
           "mimeType": {
             "type": "string",
             "description": "A string providing the mime-type of the `Blob`.",
@@ -975,10 +971,6 @@
           "name": {
             "type": "string",
             "description": "The filename. This is typically a /-separated path."
-          },
-          "version": {
-            "type": "string",
-            "description": "The version of the file. Only makes sense if this connection supports versioned files."
           }
         }
       },
